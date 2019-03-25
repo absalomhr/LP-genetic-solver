@@ -2,9 +2,11 @@ from math import log
 from math import ceil
 from random import randint
 
-z_function = [1, 1]
-restrictions = [[2, 4, "le", 125], [3, 5, "le", 100], [1, 0, "ge", 15], [0, 1, "ge", 0]]
 precission_bits = 2
+#z_function = [1, 1]
+#restrictions = [[2, 4, "le", 125], [3, 5, "le", 100], [1, 0, "ge", 15], [0, 1, "ge", 0]]
+z_function = [1, 2, 3]
+restrictions = [[0, 3, 3, "ge", 80], [2, 5, 0, "ge", 125], [6, 8, 1, "le", 250], [1, 0, -1, "ge", 20]]
 
 def limit (restrictions, varpos):
     limits = []
@@ -13,6 +15,8 @@ def limit (restrictions, varpos):
         eq_res = restrictions[i][-1]
         if (var_coeff != 0):
             limits.append (eq_res / var_coeff)
+    if 0 in limits:
+        return (0, max(limits)) # no negativity case
     return (min(limits), max(limits))
 
 def calc_mj (precission_bits, limits):
