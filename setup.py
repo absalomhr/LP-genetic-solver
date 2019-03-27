@@ -113,16 +113,15 @@ def calculateFirstIteration (result, z_function):
 
 #001100
 def mutate (vector):
-#    rand_index = randint (0, len(vector) - 1)
-    rand_index = 0
-    if rand_index == 0:
-        if vector [0] == "0":
-            new_vector = "1" + vector[1:]
-        else:
-            new_vector = "0" + vector[1:]
-    
+    rand_index = randint (0, len (vector) - 1)
+    temp_l = list (vector)
+    if vector [rand_index] == "0":
+        temp_l [rand_index] = "1"
+    else:
+        temp_l [rand_index] = "0"
+    new_vector = "".join (temp_l)
     print(new_vector)
-    return vector
+    return new_vector
 
 
 
