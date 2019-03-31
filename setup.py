@@ -3,10 +3,12 @@ from math import ceil
 from random import randint
 from random import uniform
 from tabulate import tabulate
+import collections
+import operator
 
 iterations = 3
 precission_bits = 2
-population = 10
+population = 8
 z_function = [1, 1]
 restrictions = [[2, 4, "le", 125], [3, 5, "le", 100], [1, 0, "ge", 15], [0, 1, "ge", 0]]
 #z_function = [1, 2, 3]
@@ -65,6 +67,17 @@ def areValuesValid (values, restrictions): # Is the value of the variable valid 
                 return False
     return True
 
+def isGenotypeValid (geno, z_function, mjs, limits, restrictions):
+    temp_values = []
+    for i in range(len(z_function)):
+        if i == 0:
+                fenotype = geno[0:mjs[i]]      
+        else:
+            fenotype = geno[mjs[i - 1]: mjs[i - 1] + mjs[i]]
+        temp_values.append(var_value(int(fenotype, 2), limits[i][1], limits[i][0], mjs[i]))
+    return (areValuesValid(temp_values, restrictions), temp_values)
+                
+
 def getHeaders (n):
     my_headers = ["Vector"]
     for i in range (n):
@@ -73,7 +86,7 @@ def getHeaders (n):
     my_headers.append("rand[0,1]"); my_headers.append("Vector *")
     return my_headers
 
-def calculateFirstIteration (result, z_function):
+def calculateFirstIteration (result, z_function, v_result):
     n = len(result) # population
     m = len (z_function) # number of variables
     
@@ -108,11 +121,129 @@ def calculateFirstIteration (result, z_function):
                 lower = result[j - 1][m + 3]; upper = result[j][m + 3]
             if lower <= ran_num <= upper: # if the number falls between a range we position in the highest
                 result[i].append(j + 1)
-    
+                v_result.append(j + 1)
     print(tabulate(result, getHeaders(m)))
+    print (z_sum)
+def all_same(items):
+    return all(x == items[0] for x in items)
 
-#001100
+def v_freq(items):
+    res = collections.Counter (items)
+    return res
+
+def evaluateResults(v_result, genotypes, z_function, mjs, limits, restrictions):
+    # Case where all the vectors are the same one
+    if all_same(v_result):
+        genotypes [0] = genotypes [v_result[0] - 1]
+        for i in range (1, len(genotypes)):
+            isValid = (False,[])
+            while not isValid[0]:
+                geno = mutate (genotypes[0])
+                isValid = isGenotypeValid(geno, z_function, mjs, limits, restrictions)
+                if isValid[0]:
+                    genotypes[i] = geno
+                    break
+    else:
+        new_geno = genotypes [::]
+        freq = v_freq(sorted(v_result))
+        if all_same (list(freq.values())): # Equal frequency for each vector
+            if len(freq) == len (genotypes): # All vectors have 1 frequency
+                for i in range (len (genotypes)):
+                    genotypes [i] = new_geno [v_result[i] - 1]
+            else: # There are some vectors with equal frequency, the others have 0 frequency
+                freq_k = list(freq.keys())
+                #print (freq_k)
+                n = len (freq)
+                isValid = False
+                for i in range (n):
+                    genotypes [i] = new_geno [freq_k [i] - 1]
+                for i in range (n, len(genotypes)):
+                    option = randint (0,1)
+                    if option == 0:
+                        if (n > 1):
+                            v1 = randint(1, n)
+                            while True:
+                                v2 = randint(1, n)
+                                if v2 != v1:
+                                    break
+                            isValid = (False,[])
+                            while not isValid[0]:
+                                geno = cross (new_geno [freq_k [v1 - 1] - 1], new_geno [freq_k [v2 - 1] - 1])
+                                isValid = isGenotypeValid(geno, z_function, mjs, limits, restrictions)
+                                if isValid[0]:
+                                    genotypes[i] = geno
+                                    break
+                        else:
+                            option == 1
+                    if option == 1:
+                        # mutate
+                        isValid = (False,[])
+                        while not isValid[0]:
+                            number = randint(1, n)
+                            geno = mutate (new_geno [freq_k [number - 1] - 1])
+                            isValid = isGenotypeValid(geno, z_function, mjs, limits, restrictions)
+                            if isValid[0]:
+                                genotypes[i] = geno
+                                break
+                        
+        else: # Non of the other cases
+            freq = v_freq(sorted(v_result)) # all the vectors and their frequency in the results
+            sorted_freq = sorted(freq.items(), key=operator.itemgetter(1), reverse=True)
+            winners = [] # vectors that survive to the next generation
+            #print(sorted_freq)
+            for i in range(len(sorted_freq) - 1):
+                if i == 0:
+                    winners.append(sorted_freq[0][0])
+                elif sorted_freq[i][1] == sorted_freq[i-1][1]:
+                    #print("en if")
+                    winners.append(sorted_freq[i][0])
+                else:
+                    break
+            #print (winners)
+            if len(winners) == 1:
+                genotypes [0] = genotypes [winners[0] - 1]
+                for i in range (1, len(genotypes)):
+                    isValid = (False,[])
+                    while not isValid[0]:
+                        geno = mutate (genotypes[0])
+                        isValid = isGenotypeValid(geno, z_function, mjs, limits, restrictions)
+                        if isValid[0]:
+                            genotypes[i] = geno
+                            break
+            else:
+                n = len (winners)
+                new_geno = genotypes [::]
+                isValid = False
+                for i in range (n):
+                    genotypes [i] = new_geno [winners [i] - 1]
+                for i in range (n, len(genotypes)):
+                    option = randint (0,1)
+                    if option == 0:
+                        v1 = randint(1, n)
+                        while True:
+                            v2 = randint(1, n)
+                            if v2 != v1:
+                                break
+                        isValid = (False,[])
+                        while not isValid[0]:
+                            geno = cross (new_geno [winners[v1 - 1] - 1], new_geno [winners[v2 - 1] - 1])
+                            isValid = isGenotypeValid(geno, z_function, mjs, limits, restrictions)
+                            if isValid[0]:
+                                genotypes[i] = geno
+                                break
+                    if option == 1:
+                        # mutate
+                        isValid = (False,[])
+                        while not isValid[0]:
+                            number = randint(1, n)
+                            geno = mutate (new_geno [winners[number - 1] - 1])
+                            isValid = isGenotypeValid(geno, z_function, mjs, limits, restrictions)
+                            if isValid[0]:
+                                genotypes[i] = geno
+                                break                        
+                
 def mutate (vector):
+    #print("mutate")
     rand_index = randint (0, len (vector) - 1)
     temp_l = list (vector)
     if vector [rand_index] == "0":
@@ -120,51 +251,58 @@ def mutate (vector):
     else:
         temp_l [rand_index] = "0"
     new_vector = "".join (temp_l)
-    print(new_vector)
+    #print(new_vector)
     return new_vector
 
-
-
-
+def cross (v1, v2):
+    #print("cross")
+    #print(v1); print(v2)
+    rand_index = randint (1, len (v1) - 1)
+    #print(rand_index)
+    new_vector = v1[:rand_index] + v2[rand_index:]
+    #print(new_vector)
+    return new_vector
+    
 limits = [] # limits of each variable
 mjs = [] # mjs of each variable
 genotypes = [] # genotypes generated each generation
-result = []
+result = [] # table of each iteration
+v_result = [] # the last column of the table (selected vectors)
 
 for i in range (len(z_function)):
     limits.append(limit(restrictions, i))
-    #print("* Limits of X" + str (i) +" are: " + str(limits[i]))
     mjs.append(calc_mj (precission_bits, limits[i]))
-    #print("* Mj of X" + str (i) +" is: " + str(mjs[i]) + "\n")
-    
-    
-for i in range (population): # how many genotypes we want
-    isvalid = False
-    while not isvalid:
-        temp_values = []
-        geno = generate_genotype(sum(mjs))
-        #print(str (i + 1) +".- Genotype generated: " + geno)
+        
+print (mjs)
+# for i in range (population): # how many genotypes we want
+#     isvalid = (False,[])
+#     while not isvalid [0]:
+#         geno = generate_genotype(sum(mjs))
+#         isvalid = isGenotypeValid (geno, z_function, mjs, limits, restrictions)
+#         if isvalid [0]:
+#             temp_values = isvalid[1]
+#             genotypes.append(geno)
+#             result.append([])
+#             result[i].append(i + 1)
+#             for j in range (len(z_function)):
+#                 result[i].append(temp_values[j])
+#             break
+# #print(result)
 
-        for j in range (len (z_function)):
-            if j == 0:
-                fenotype = geno[0:mjs[j]]      
-            else:
-                fenotype = geno[mjs[j - 1]: mjs[j - 1] + mjs[j]]            
-            
-            #print ("** Fenotype " + str(j) + ": " + fenotype + " len: " + str(len(fenotype)) + " decimal value: " + str (int(fenotype, 2)))
-            
-            temp_values.append(var_value(int(fenotype, 2), limits[j][1], limits[j][0], mjs[j]))
-            
-        #print ("** Values for genotype: " + str(temp_values))
-        isvalid = areValuesValid(temp_values, restrictions)
-        #print ("** Is this genotype valid?: " + str (isvalid) + "\n")
-        if isvalid:
-            genotypes.append(geno)
-            result.append([])
-            result[i].append(i + 1)
-            for j in range (len(z_function)):
-                result[i].append(temp_values[j])
-            break
-
-#calculateFirstIteration(result, z_function)
-mutate ("001100")
+# calculateFirstIteration (result, z_function, v_result)
+# #print (genotypes)
+# for i in range (iterations - 1):
+#     evaluateResults(v_result, genotypes, z_function, mjs, limits, restrictions)
+#     result = []
+#     v_result = []
+#     #print (genotypes)
+#     for j in range(len(genotypes)):
+#         isvalid = isGenotypeValid (genotypes[j], z_function, mjs, limits, restrictions)
+#         temp_values = isvalid[1]
+#         result.append([])
+#         result[j].append(j + 1)
+#         for k in range (len(z_function)):
+#             result[j].append(temp_values[k])
+#     #print(result)
+#     calculateFirstIteration (result, z_function, v_result)
+# #print (genotypes)
