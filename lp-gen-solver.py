@@ -112,7 +112,7 @@ def generatePopulation (mjs, limits, restrictions, population, n_variables, geno
 # This function calculates the rest of the columns in the result table
 # and returns the las column as a list for further calculation
 # of the next iteration of the algorithm
-def calculateIteration (vectors, genotypes, result_table, z_function, population, n_variables, mjs, limits, firsIteration=False):
+def calculateIteration (vectors, genotypes, result_table, z_function, population, n_variables, mjs, limits, firsIteration=False, lastIteration=False):
     # If this is the first iteration we have to generate the population
     if firsIteration:
     	result_table = generatePopulation (mjs, limits, restrictions, population, n_variables, genotypes)
@@ -157,6 +157,13 @@ def calculateIteration (vectors, genotypes, result_table, z_function, population
                 vectors.append(j + 1)
     print(tabulate(result_table, getHeaders(n_variables)))
     print ("Sum of Z's: " + str(z_sum))
+
+    if lastIteration:
+    	zs = []
+    	for i in range(population):
+    		zs.append(result_table[i][n_variables + 1])
+    	print("Best Z: " + str(max(zs)) + " Vector: " + str(zs.index(max(zs)) + 1))
+    	print("Most common vector: " + str(max(set(vectors), key=vectors.count)))
     return vectors
 
 # Function that evaluates whether all the values in a list are equal
@@ -278,12 +285,12 @@ def evaluateResults (vectors, limits, mjs, genotypes, z_function, population, n_
 	return result
 
 # The coeficcients of the function that we have to maximize or minimize
-z_function = [1]
+z_function = [1, 1]
 # The inequations that need to be fulfilled at all times
 # of the form [[coeficcients, comparison sign, constant]
-restrictions = [[1, "le", 5], [1, "ge", -5]]
+restrictions = [[2, 1, "le", 20], [1, 1, "ge", 10], [1, 0, "ge", 0], [0, 1, "ge", 0]]
 # Quantity of genotypes for each population
-population = 3
+population = 100
 # See mathematical formula on the readme
 precission_bits = 1
 # Max number of iterations (generations) before stoping
@@ -319,6 +326,8 @@ for i in range (iterations):
 	print("Iteration " + str(i+1) + ":")
 	if i == 0:
 		vectors = calculateIteration(vectors, genotypes, result_table, z_function, population, n_variables, mjs, limits, firsIteration=True)
+	elif i == iterations - 1:
+		vectors = calculateIteration(vectors, genotypes, result_table, z_function, population, n_variables, mjs, limits, lastIteration=True)
 	else:
 		vectors = calculateIteration(vectors, genotypes, result_table, z_function, population, n_variables, mjs, limits)
 	#print ("vectors: " + str(vectors))
