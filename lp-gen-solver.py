@@ -4,8 +4,11 @@ from math import ceil # Smalles integer not less than x
 from tabulate import tabulate # Library that makes printing a table easy
 import collections # For counting frequencies of appearance
 import operator # For sorting a dictionary by value
-
-import math
+# This libraries are used for stoping the execution of the program
+import os
+import time
+from datetime import datetime
+from threading import Timer
 
 # Function that calculates the limits of each variable
 # based on the restrictions given
@@ -284,11 +287,25 @@ def evaluateResults (vectors, limits, mjs, genotypes, z_function, population, n_
 				break
 	return result
 
+# Function that stops the execution of the program after certain time
+def exitfunc():
+    print ("Exit Time: " + str(datetime.now()))
+    os._exit(0)
+Timer(120, exitfunc).start() # exit in 120 seconds (2 minutes)
+
 # The coeficcients of the function that we have to maximize or minimize
-z_function = [1, 1]
+# z_function = [-1, -1]
+# z_function = [1, 1, 1]
+# z_function = [1, -1, 1, 1]
+z_function = [1, 1, -2, 1]
+
 # The inequations that need to be fulfilled at all times
 # of the form [[coeficcients, comparison sign, constant]
-restrictions = [[2, 1, "le", 20], [1, 1, "ge", 10], [1, 0, "ge", 0], [0, 1, "ge", 0]]
+# restrictions = [[2, 1, "le", 20], [1, 1, "ge", 10], [1, 0, "ge", 0], [0, 1, "ge", 0]]
+# restrictions = [[1, 0, 1, "le", 50], [2, 1, 0, "le", 75], [1, 0, -1, "ge", 10], [1, 0, 0, "ge", 0], [0, 1, 0, "ge", 0], [1, 0, 0, "ge", -5]]
+# restrictions = [[1, 1, 0, 0, "le", 30], [1, 0, 0, 1, "le", 40], [1, 1, 1, 1, "eq", 100], [1, 0, 0, 0, "ge", 0], [0, 1, 0, 0, "ge", 0], [0, 0, 1, 0, "ge", 0], [0, 0, 0, 1, "ge", 0]]
+restrictions = [[1, 0, 1, 0, "le", 50], [0, 1, 0, 1, "le", 75], [1, 0, 0, 0, "ge", 10], [0, 1, 0, 1, "le", 100], [0, 0, 2, 1, "ge", 30], [1, 0, 0, 0, "ge", 0], [0, 1, 0, 0, "ge", 0], [0, 0, 1, 0, "ge", 0], [0, 0, 0, 1, "ge", 0]]
+
 # Quantity of genotypes for each population
 population = 100
 # See mathematical formula on the readme
@@ -332,3 +349,4 @@ for i in range (iterations):
 		vectors = calculateIteration(vectors, genotypes, result_table, z_function, population, n_variables, mjs, limits)
 	#print ("vectors: " + str(vectors))
 	#print ("genotypes: " + str(genotypes))
+os._exit(0)
