@@ -67,16 +67,29 @@ def calculate_values (genotype, limits, mjs, n_variables):
 # Function that determines whether the values
 # ​​meet all the restrictions
 def areValuesValid (values, restrictions, n_variables):
+    #print (values)
     for i in range(len(restrictions)):
         result = 0
         for j in range(n_variables):
             result += values [j] * restrictions [i][j]
+        
         if restrictions[i][n_variables] == "le" and not (result <= restrictions[i][-1]):
-                return False
+        	return False
         elif restrictions[i][n_variables] == "ge" and not (result >= restrictions[i][-1]):
-                return False
-        elif restrictions[i][n_variables] == "eq" and not (result == restrictions[i][-1]):
-                return False
+            return False
+        elif restrictions[i][n_variables] == "eq":
+
+        	print ("falla: " + str(restrictions[i]) + str(result))
+        	
+        	percentage = restrictions[i][-1]
+        	upper = percentage * (1.05)
+        	lower = percentage * (0.95)
+
+        	if not (result >= lower):
+        		return False
+
+        	if not (result <= upper):
+        		return False
     return True
 
 # Function that returns a list of headers for tabulation
@@ -104,6 +117,7 @@ def generatePopulation (mjs, limits, restrictions, population, n_variables, geno
 				# If the values are valid we can add the genotype to the
 				# population, and start to fill the result table
 				if valid_values:
+					print ("genotipo valido")
 					genotypes.append(t_genotype)
 					result.append([])
 					result[i].append(i + 1)
@@ -291,25 +305,25 @@ def evaluateResults (vectors, limits, mjs, genotypes, z_function, population, n_
 def exitfunc():
     print ("Exit Time: " + str(datetime.now()))
     os._exit(0)
-Timer(120, exitfunc).start() # exit in 120 seconds (2 minutes)
+Timer(300, exitfunc).start() # exit in 120 seconds (2 minutes)
 
 # The coeficcients of the function that we have to maximize or minimize
 # z_function = [-1, -1]
-# z_function = [1, 1, 1]
-# z_function = [1, -1, 1, 1]
-z_function = [1, 1, -2, 1]
+# z_function = [-1, -1, -1]
+z_function = [1, -1, 1, 1]
+# z_function = [1, 1, -2, 1]
 
 # The inequations that need to be fulfilled at all times
 # of the form [[coeficcients, comparison sign, constant]
 # restrictions = [[2, 1, "le", 20], [1, 1, "ge", 10], [1, 0, "ge", 0], [0, 1, "ge", 0]]
 # restrictions = [[1, 0, 1, "le", 50], [2, 1, 0, "le", 75], [1, 0, -1, "ge", 10], [1, 0, 0, "ge", 0], [0, 1, 0, "ge", 0], [1, 0, 0, "ge", -5]]
-# restrictions = [[1, 1, 0, 0, "le", 30], [1, 0, 0, 1, "le", 40], [1, 1, 1, 1, "eq", 100], [1, 0, 0, 0, "ge", 0], [0, 1, 0, 0, "ge", 0], [0, 0, 1, 0, "ge", 0], [0, 0, 0, 1, "ge", 0]]
-restrictions = [[1, 0, 1, 0, "le", 50], [0, 1, 0, 1, "le", 75], [1, 0, 0, 0, "ge", 10], [0, 1, 0, 1, "le", 100], [0, 0, 2, 1, "ge", 30], [1, 0, 0, 0, "ge", 0], [0, 1, 0, 0, "ge", 0], [0, 0, 1, 0, "ge", 0], [0, 0, 0, 1, "ge", 0]]
+restrictions = [[1, 1, 0, 0, "le", 30], [1, 0, 0, 1, "le", 40], [1, 1, 1, 1, "eq", 100], [1, 0, 0, 0, "ge", 0], [0, 1, 0, 0, "ge", 0], [0, 0, 1, 0, "ge", 0], [0, 0, 0, 1, "ge", 0]]
+# restrictions = [[1, 0, 1, 0, "le", 50], [0, 1, 0, 1, "le", 75], [1, 0, 0, 0, "ge", 10], [0, 1, 0, 1, "le", 100], [0, 0, 2, 1, "ge", 30], [1, 0, 0, 0, "ge", 0], [0, 1, 0, 0, "ge", 0], [0, 0, 1, 0, "ge", 0], [0, 0, 0, 1, "ge", 0]]
 
 # Quantity of genotypes for each population
-population = 100
+population = 10
 # See mathematical formula on the readme
-precission_bits = 1
+precission_bits = 0
 # Max number of iterations (generations) before stoping
 iterations = 5
 # Limits of each variable
